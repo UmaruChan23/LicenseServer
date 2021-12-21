@@ -15,6 +15,7 @@ public class License {
     private ActivationCode code;
     private Date activationDate;
     private Date endingDate;
+    private long deviseId;
 
     public long getId() {
         return id;
