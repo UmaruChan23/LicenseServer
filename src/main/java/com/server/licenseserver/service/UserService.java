@@ -2,6 +2,7 @@ package com.server.licenseserver.service;
 
 import com.server.licenseserver.entity.Role;
 import com.server.licenseserver.entity.User;
+import com.server.licenseserver.exception.UserAlreadyExistsException;
 import com.server.licenseserver.repo.RoleRepo;
 import com.server.licenseserver.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +22,14 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public User saveUser(User userEntity) {
-        Role userRole = roleRepo.findByName("ROLE_USER");
-        userEntity.setRole(userRole);
-        userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-        return userRepo.save(userEntity);
+    public User saveUser(User userEntity) throws UserAlreadyExistsException {
+        if (findByLogin(userEntity.getLogin()) == null) {
+            Role userRole = roleRepo.findByName("ROLE_USER");
+            userEntity.setRole(userRole);
+            userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
+            return userRepo.save(userEntity);
+        }
+        throw new UserAlreadyExistsException("user already exist");
     }
 
     public User findByLogin(String login) {
@@ -41,4 +45,5 @@ public class UserService {
         }
         return null;
     }
+
 }

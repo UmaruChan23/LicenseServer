@@ -12,6 +12,7 @@ public class ActivationCode {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String code;
+    private int activeDevices;
     private int deviceCount;
     private int duration;
     private Date firstActivationDate;
@@ -29,6 +30,26 @@ public class ActivationCode {
     }
 
     public ActivationCode() {
+    }
+
+    public boolean canAddDevice() {
+        return activeDevices < deviceCount;
+    }
+
+    public boolean canRemoveDevice() {
+        return activeDevices > 0;
+    }
+
+    public void increaseActiveDeviceCount() {
+        if (canAddDevice()) {
+            activeDevices++;
+        }
+    }
+
+    public void decreaseActiveDeviceCount() {
+        if (canRemoveDevice()) {
+            activeDevices--;
+        }
     }
 
     public long getId() {
