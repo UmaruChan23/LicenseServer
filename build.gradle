@@ -29,5 +29,6 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
+    scanForTestClasses = false
+    include "**/*Test.class"
 }
