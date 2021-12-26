@@ -1,12 +1,13 @@
 package com.server.licenseserver.controller;
 
 import com.server.licenseserver.entity.License;
-import com.server.licenseserver.exception.UserAlreadyExistsException;
 import com.server.licenseserver.model.GenerateCodeRequest;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import com.server.licenseserver.service.ActivationService;
 import com.server.licenseserver.service.LicenseService;
 import com.server.licenseserver.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +22,7 @@ public class ActivationCodeController {
 
     private final ActivationService activationService;
 
+    @Autowired
     public ActivationCodeController(LicenseService licenseService,
                                     UserService userService,
                                     JwtProvider jwtProvider,
@@ -33,31 +35,22 @@ public class ActivationCodeController {
     }
 
     @PostMapping("/generate")
-    public String getActivationCode(@RequestBody GenerateCodeRequest license,
-                                    @RequestHeader("Authorization") String token) {
-        if (jwtProvider.validateToken(token)) {
-            if (!userService.findByLogin(jwtProvider.getLoginFromToken(token))
-                    .getRole()
-                    .getName()
-                    .equals("ROLE_USER")) {
-                return licenseService.createNewActivationCode(license);
-            }
-            return "permission denied";
-        }
-        return "invalid token";
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER')")
+    public String getActivationCode(@RequestBody GenerateCodeRequest license) {
+        return licenseService.createNewActivationCode(license);
     }
 
-    @GetMapping("/trial")
-    public String getTrialCode(@RequestHeader("Authorization") String token) {
-        if (jwtProvider.validateToken(token)) {
-            return licenseService.generateTrial(token);
-        }
-        return "invalid token";
+    @PostMapping ("/trial")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
+    public String getTrialCode(@RequestHeader("Authorization") String token,
+                               @RequestBody String productName) {
+        return licenseService.generateTrial(token.substring(7), productName);
     }
 
     @PostMapping("/activate")
-    private License activateCode(@RequestHeader("Authorization") String token,
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
+    public License activateCode(@RequestHeader("Authorization") String token,
                                  @RequestBody String code) {
-        return activationService.activate(code, jwtProvider.getDeviceIdFromToken(token));
+        return activationService.activate(code, jwtProvider.getDeviceIdFromToken(token.substring(7)));
     }
 }

@@ -13,14 +13,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepo userRepo;
-    @Autowired
-    private RoleRepo roleRepo;
+    private final UserRepo userRepo;
+    private final RoleRepo roleRepo;
 
-    @Lazy
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Lazy
+    public UserService(UserRepo userRepo, RoleRepo roleRepo, PasswordEncoder passwordEncoder) {
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public User saveUser(User userEntity) throws UserAlreadyExistsException {
         if (findByLogin(userEntity.getLogin()) == null) {

@@ -9,4 +9,5 @@ public class GenerateCodeRequest {
     private int deviceCount;
     private int duration;
     private String type;
+    private Long productId;
 }

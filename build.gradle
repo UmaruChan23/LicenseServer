@@ -26,9 +26,11 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.6.1'
     testImplementation 'org.springframework.security:spring-security-test:5.5.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation group: 'com.h2database', name: 'h2', version: '1.4.200'
+
 }
 
 test {
-    scanForTestClasses = false
-    include "**/*Test.class"
+    useJUnitPlatform()
 }
