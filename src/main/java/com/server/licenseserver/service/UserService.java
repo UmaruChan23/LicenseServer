@@ -4,6 +4,7 @@ import com.server.licenseserver.entity.Role;
 import com.server.licenseserver.entity.User;
 import com.server.licenseserver.exception.UserAlreadyExistsException;
 import com.server.licenseserver.repo.RoleRepo;
+import com.server.licenseserver.repo.TrialRepo;
 import com.server.licenseserver.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -15,14 +16,16 @@ public class UserService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final TrialRepo trialRepo;
 
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
     @Lazy
-    public UserService(UserRepo userRepo, RoleRepo roleRepo, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepo userRepo, RoleRepo roleRepo, TrialRepo trialRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
+        this.trialRepo = trialRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -48,6 +51,11 @@ public class UserService {
             }
         }
         return null;
+    }
+
+    public boolean hasActivatedLicense(String login) {
+        User user = userRepo.findByLogin(login);
+        return user.isHasActivatedLicense();
     }
 
 }

@@ -1,16 +1,19 @@
 package com.server.licenseserver.service;
 
-import com.server.licenseserver.entity.ActivationCode;
-import com.server.licenseserver.entity.Product;
-import com.server.licenseserver.entity.Trial;
-import com.server.licenseserver.entity.User;
+import com.server.licenseserver.entity.*;
+import com.server.licenseserver.model.ActivationRequest;
 import com.server.licenseserver.model.GenerateCodeRequest;
-import com.server.licenseserver.repo.*;
+import com.server.licenseserver.model.GenerateTrialRequest;
+import com.server.licenseserver.model.Ticket;
+import com.server.licenseserver.repo.ActivationCodeRepo;
+import com.server.licenseserver.repo.LicenseRepo;
+import com.server.licenseserver.repo.ProductRepo;
+import com.server.licenseserver.repo.TrialRepo;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class LicenseService {
@@ -19,25 +22,25 @@ public class LicenseService {
 
     private final LicenseRepo licenseRepo;
 
-    private final UserRepo userRepo;
+    private final UserService userService;
+
+    private final ActivationService activationService;
 
     private final TrialRepo trialRepo;
 
     private final ProductRepo productRepo;
 
-    private final JwtProvider provider;
-
     public LicenseService(ActivationCodeRepo activationCodeRepo,
                           LicenseRepo licenseRepo,
-                          UserRepo userRepo,
-                          TrialRepo trialRepo,
+                          UserService userService,
+                          ActivationService activationService, TrialRepo trialRepo,
                           ProductRepo productRepo, JwtProvider provider) {
         this.activationCodeRepo = activationCodeRepo;
         this.licenseRepo = licenseRepo;
-        this.userRepo = userRepo;
+        this.userService = userService;
+        this.activationService = activationService;
         this.trialRepo = trialRepo;
         this.productRepo = productRepo;
-        this.provider = provider;
     }
 
     public String createNewActivationCode(GenerateCodeRequest request) {
@@ -57,22 +60,78 @@ public class LicenseService {
         return activationCode;
     }
 
-    public String generateTrial(String token, String productName) {
-        String login = provider.getLoginFromToken(token);
-        String deviceId = provider.getDeviceIdFromToken(token);
-        User user = userRepo.findByLogin(login);
+    public String generateTrial(GenerateTrialRequest request) {
+        String login = request.getLogin();
+        String deviceId = request.getDeviceId();
+        String productName = request.getProductName();
+        User user = userService.findByLogin(login);
         Product product = productRepo.findByName(productName);
         if (user != null) {
-            if (trialRepo.findByUserId(user.getId()) == null) {
+            if (trialRepo.findByUserIdAndDeviceId(user.getId(), deviceId) == null) {
                 Trial trial = new Trial();
+                trial.setProductId(product.getId());
                 trial.setUserId(user.getId());
                 trial.setDeviceId(deviceId);
                 trialRepo.save(trial);
-                return createNewActivationCode(new GenerateCodeRequest(1, 30 , "TRIAL", product.getId()));
+                return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()));
             }
             return null;
         }
         throw new UsernameNotFoundException("user not found");
+    }
+
+    public Ticket activateLicense(ActivationRequest request) {
+        String deviceId = request.getDeviceId();
+        String code = request.getCode();
+        License currentLicense = getActivatedLicenseForProduct(deviceId, code);
+        if (currentLicense != null) {
+            if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
+                blockTrial(currentLicense);
+            } else {
+                return null;
+            }
+        }
+        Ticket ticket = new Ticket(activationService.activate(code, deviceId));
+        ticket.signTicket();
+        return ticket;
+    }
+
+    public License getActivatedLicense(String deviceId) {
+        List<License> licenses = licenseRepo.findAllByDeviceId(deviceId);
+        for (License license : licenses) {
+            if (!license.isBlocked() && license.getEndingDate().after(new Date())) {
+                return license;
+            }
+        }
+        return null;
+    }
+
+    public void blockTrial(License license) {
+        license.setBlocked(true);
+        licenseRepo.save(license);
+    }
+
+    public License getActivatedLicenseForProduct(String deviceId, String code) {
+        License license = getActivatedLicense(deviceId);
+        if (license != null) {
+            ActivationCode activationCode = activationCodeRepo.findByCode(code);
+            if (license.getCode().getProduct().getId() == activationCode.getProduct().getId()) {
+                return license;
+            }
+        }
+        return null;
+    }
+
+    public Ticket refreshTicket(Ticket ticket) {
+        License license = getActivatedLicense(ticket.getDeviceId());
+        if (ticket.getActivationDate().equals(license.getActivationDate()) &&
+            ticket.getLicenseExpDate().equals(license.getActivationDate()) &&
+            !license.isBlocked()) {
+            Calendar currentDate = new GregorianCalendar();
+            currentDate.add(Calendar.DAY_OF_MONTH, 1);
+            ticket.setTicketExpDate(currentDate.getTime());
+        }
+        return ticket;
     }
 
     private String generateCode() {

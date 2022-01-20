@@ -26,6 +26,7 @@ public class AuthController {
         User user = new User();
         user.setPassword(registrationRequest.getPassword());
         user.setLogin(registrationRequest.getLogin());
+        user.setHasActivatedLicense(false);
         try {
             userService.saveUser(user);
         } catch (UserAlreadyExistsException ex) {

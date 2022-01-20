@@ -19,6 +19,8 @@ public class User {
     @Column
     private String password;
 
+    private boolean hasActivatedLicense = false;
+
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
