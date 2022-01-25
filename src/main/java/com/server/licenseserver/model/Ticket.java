@@ -2,9 +2,25 @@ package com.server.licenseserver.model;
 
 import com.server.licenseserver.entity.License;
 import lombok.Data;
+import org.bouncycastle.cert.jcajce.JcaCertStore;
+import org.bouncycastle.cms.CMSProcessableByteArray;
+import org.bouncycastle.cms.CMSSignedData;
+import org.bouncycastle.cms.CMSSignedDataGenerator;
+import org.bouncycastle.cms.CMSTypedData;
+import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
+import org.bouncycastle.util.Store;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -34,29 +50,42 @@ public class Ticket {
     }
 
     public void signTicket() {
-        this.signature = createSignature(this.toString().getBytes(StandardCharsets.UTF_8));
+        try {
+            this.signature = createSignature(this.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private byte[] createSignature(byte[] bytes) {
-        try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DSA");
-            keyPairGenerator.initialize(2048);
+    public static byte[] createSignature(byte[] data) throws Exception {
 
-            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        Security.addProvider(new BouncyCastleProvider());
 
-            PrivateKey privateKey = keyPair.getPrivate();
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        char[] keyStorePassword = "changeit".toCharArray();
+        keyStore.load(new FileInputStream("newKeyStoreName"), keyStorePassword);
 
-            Signature signature = Signature.getInstance("SHA256withDSA");
+        KeyStore.ProtectionParameter entryPassword =
+                new KeyStore.PasswordProtection(keyStorePassword);
 
-            signature.initSign(privateKey);
+        KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)
+                keyStore.getEntry("diplom", entryPassword);
 
-            signature.update(bytes);
+        X509Certificate[] certificates = new X509Certificate[1];
+        certificates[0] = (X509Certificate) privateKeyEntry.getCertificate();
 
-            return signature.sign();
+        PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyEntry.getPrivateKey().getEncoded());
+        KeyFactory keyFactory = KeyFactory.getInstance("ECGOST3410", "BC");
+        PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
 
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-            return null;
-        }
+        CMSTypedData msg = new CMSProcessableByteArray(data);
+        Store certStore = new JcaCertStore(Arrays.asList(certificates));
+        CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
+        ContentSigner signer = new org.bouncycastle.operator.jcajce.JcaContentSignerBuilder("GOST3411withECGOST3410").setProvider("BC").build(privateKey);
+        gen.addSignerInfoGenerator(new JcaSignerInfoGeneratorBuilder(new JcaDigestCalculatorProviderBuilder().setProvider("BC").build()).build(signer, (X509Certificate) certificates[0]));
+        gen.addCertificates(certStore);
+        CMSSignedData sigData = gen.generate(msg, true);
+
+        return sigData.getEncoded();
     }
 }
