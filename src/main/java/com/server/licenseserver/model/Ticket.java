@@ -75,7 +75,7 @@ public class Ticket {
         certificates[0] = (X509Certificate) privateKeyEntry.getCertificate();
 
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyEntry.getPrivateKey().getEncoded());
-        KeyFactory keyFactory = KeyFactory.getInstance("ECGOST3410", "BC");
+        KeyFactory keyFactory = KeyFactory.getInstance("ECGOST3410-2012", "BC");
         PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
 
         CMSTypedData msg = new CMSProcessableByteArray(data);

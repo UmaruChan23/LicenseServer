@@ -5,6 +5,7 @@ import com.server.licenseserver.entity.License;
 import com.server.licenseserver.repo.ActivationCodeRepo;
 import com.server.licenseserver.repo.LicenseRepo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -22,6 +23,7 @@ public class ActivationService {
         this.licenseRepo = licenseRepo;
     }
 
+    @Transactional
     public License activate(String code, String deviceId) {
         ActivationCode activationCode = activationCodeRepo.findByCode(code);
         Calendar calendar = new GregorianCalendar();
