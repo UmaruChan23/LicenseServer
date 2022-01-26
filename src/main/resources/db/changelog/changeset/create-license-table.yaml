@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: CREATE-LICENSE
+      author: SweetBuddy
+      changes:
+        - createTable:
+            tableName: license
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: activation_date
+                  type: timestamp
+              - column:
+                  name: blocked
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: device_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ending_date
+                  type: timestamp
+              - column:
+                  name: code_id
+                  type: int8
+                  constraints:
+                    nullable: false

@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: CREATE-CODES
+      author: SweetBuddy
+      changes:
+        - createTable:
+            tableName: codes
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: active_devices
+                  type: int4
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: varchar(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: device_count
+                  type: int4
+                  constraints:
+                    nullable: false
+              - column:
+                  name: duration
+                  type: int4
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_activation_date
+                  type: timestamp
+              - column:
+                  name: type
+                  type: varchar(255)
+              - column:
+                  name: user_id
+                  type: int8
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: int8
+                  constraints:
+                    nullable: false

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: ALTER-CODES-1
+      author: SweetBuddy
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: codes
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: FK8ry3r9xl1dqixqp9dyrxehcsq

@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: CREATE-PRODUCTS
+      author: SweetBuddy
+      changes:
+        - createTable:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: is_blocked
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false

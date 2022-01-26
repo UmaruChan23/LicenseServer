@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: CREATE-TRIALS
+      author: SweetBuddy
+      changes:
+        - createTable:
+            tableName: trials
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: device_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product_id
+                  type: int8
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: int8
+                  constraints:
+                    nullable: false
