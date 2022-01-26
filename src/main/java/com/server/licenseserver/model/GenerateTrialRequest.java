@@ -8,5 +8,5 @@ import lombok.Data;
 public class GenerateTrialRequest {
     private String login;
     private String deviceId;
-    private String productName;
+    private long productId;
 }

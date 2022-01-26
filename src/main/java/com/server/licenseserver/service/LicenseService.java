@@ -12,6 +12,7 @@ import com.server.licenseserver.repo.TrialRepo;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -43,29 +44,33 @@ public class LicenseService {
         this.productRepo = productRepo;
     }
 
-    public String createNewActivationCode(GenerateCodeRequest request) {
-        ActivationCode activationCode = generateCodeFromRequest(request);
+    public String createNewActivationCode(GenerateCodeRequest request, User user) {
+        ActivationCode activationCode = generateCodeFromRequest(request, user);
         activationCodeRepo.save(activationCode);
         return activationCode.getCode();
     }
 
-    private ActivationCode generateCodeFromRequest(GenerateCodeRequest request) {
+    private ActivationCode generateCodeFromRequest(GenerateCodeRequest request, User user) {
         ActivationCode activationCode = new ActivationCode();
         activationCode.setCode(generateCode());
         activationCode.setDeviceCount(request.getDeviceCount());
         activationCode.setDuration(request.getDuration());
         activationCode.setType(request.getType());
+        activationCode.setOwner(user);
         Product product = productRepo.getById(request.getProductId());
         activationCode.setProduct(product);
         return activationCode;
     }
 
+    @Transactional
     public String generateTrial(GenerateTrialRequest request) {
         String login = request.getLogin();
         String deviceId = request.getDeviceId();
-        String productName = request.getProductName();
+        //сделать поиск по id +
+        long productId = request.getProductId();
         User user = userService.findByLogin(login);
-        Product product = productRepo.findByName(productName);
+        Product product = productRepo.findById(productId);
+        //открыть транзакцию +
         if (user != null) {
             if (trialRepo.findByUserIdAndDeviceId(user.getId(), deviceId) == null) {
                 Trial trial = new Trial();
@@ -73,7 +78,7 @@ public class LicenseService {
                 trial.setUserId(user.getId());
                 trial.setDeviceId(deviceId);
                 trialRepo.save(trial);
-                return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()));
+                return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()), user);
             }
             return null;
         }
@@ -88,6 +93,7 @@ public class LicenseService {
             if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
                 blockTrial(currentLicense);
             } else {
+                //выкинуть исключение
                 return null;
             }
         }

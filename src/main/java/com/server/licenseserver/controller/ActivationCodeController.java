@@ -1,13 +1,10 @@
 package com.server.licenseserver.controller;
 
-import com.server.licenseserver.entity.License;
-import com.server.licenseserver.entity.User;
 import com.server.licenseserver.model.ActivationRequest;
 import com.server.licenseserver.model.GenerateCodeRequest;
 import com.server.licenseserver.model.GenerateTrialRequest;
 import com.server.licenseserver.model.Ticket;
 import com.server.licenseserver.security.jwt.JwtProvider;
-import com.server.licenseserver.service.ActivationService;
 import com.server.licenseserver.service.LicenseService;
 import com.server.licenseserver.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,29 +21,35 @@ public class ActivationCodeController {
 
     private final LicenseService licenseService;
 
+    private final UserService userService;
+
     @Autowired
     public ActivationCodeController(LicenseService licenseService,
-                                    JwtProvider jwtProvider) {
+                                    JwtProvider jwtProvider, UserService userService) {
 
         this.licenseService = licenseService;
         this.jwtProvider = jwtProvider;
+        this.userService = userService;
     }
 
     @PostMapping("/generate")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER')")
-    public String getActivationCode(@RequestBody GenerateCodeRequest license) {
-        return licenseService.createNewActivationCode(license);
+    public String getActivationCode(@RequestHeader("Authorization") String token,
+                                    @RequestBody GenerateCodeRequest license) {
+        String subToken = token.substring(7);
+        return licenseService.createNewActivationCode(license,
+                userService.findByLogin(jwtProvider.getLoginFromToken(subToken)));
     }
 
     @PostMapping ("/trial")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
     public String getTrialCode(@RequestHeader("Authorization") String token,
-                               @RequestBody String productName) {
+                               @RequestBody long productId) {
         String subToken = token.substring(7);
         GenerateTrialRequest request = new GenerateTrialRequest(
                 jwtProvider.getLoginFromToken(subToken),
                 jwtProvider.getDeviceIdFromToken(subToken),
-                productName
+                productId
         );
         return licenseService.generateTrial(request);
     }
