@@ -55,7 +55,7 @@ jobs:
      uses: timheuer/base64-to-file@v1.1
      with:
       fileName: 'diplomKeyStore'
-      fileDir: '/opt'
+      fileDir: './'
       encodedString: ${{ secrets.SERT }}
       
    - name: LS
