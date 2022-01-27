@@ -55,12 +55,6 @@ public class Ticket {
 
     public static byte[] createSignature(byte[] data) throws Exception {
 
-        System.out.println(new File(Ticket.class
-                .getProtectionDomain()
-                .getCodeSource()
-                .getLocation()
-                .toURI()).getParent());
-
         Security.addProvider(new BouncyCastleProvider());
 
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
