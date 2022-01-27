@@ -59,7 +59,7 @@ jobs:
       encodedString: ${{ secrets.SERT }}
       
    - name: LS
-     run: ls -lah ./
+     run: ls -lah /opt
     
    - name: Build and push docker container
      uses: docker/build-push-action@v2
