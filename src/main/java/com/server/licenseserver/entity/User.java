@@ -3,6 +3,7 @@ package com.server.licenseserver.entity;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name ="users")
@@ -19,8 +20,13 @@ public class User {
     @Column
     private String password;
 
+    private boolean hasActivatedLicense = false;
+
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner")
+    List<ActivationCode> codes;
 
 }

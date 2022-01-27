@@ -19,5 +19,6 @@ public class License {
     private ActivationCode code;
     private Date activationDate;
     private Date endingDate;
-    private String deviseId;
+    private String deviceId;
+    private boolean blocked = false;
 }

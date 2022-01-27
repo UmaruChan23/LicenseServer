@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: ALTER-USERS-1
+      author: SweetBuddy
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: users
+            baseColumnNames: role_id
+            referencedTableName: roles
+            referencedColumnNames: id
+            constraintName: FKp56c1712k691lhsyewcssf40f

@@ -1,0 +1,23 @@
+databaseChangeLog: #параметр в котором находятся миграции
+  - include: # список активных миграций
+      file: db/changelog/changeset/create-users-table.yaml # создание таблицы пользователей
+  - include:
+      file: db/changelog/changeset/create-roles-table.yaml # создание таблицы ролей
+  - include:
+      file: db/changelog/changeset/insert-into-roles-table.yaml # добавление базовых ролей
+  - include:
+      file: db/changelog/changeset/alter-table-users-roles.yaml # создание связи users - roles
+  - include:
+      file: db/changelog/changeset/create-codes-table.yaml # создание таблицы кодов
+  - include:
+      file: db/changelog/changeset/create-products-table.yaml # создание таблицы продуктов
+  - include:
+      file: db/changelog/changeset/create-trials-table.yaml # создание таблицы триалок
+  - include:
+      file: db/changelog/changeset/alter-table-codes-users.yaml # создание связи codes - users
+  - include:
+      file: db/changelog/changeset/alter-table-codes-products.yaml # создание связи codes - products
+  - include:
+      file: db/changelog/changeset/create-license-table.yaml # создание таблицы лицензий
+  - include:
+      file: db/changelog/changeset/alter-table-license-codes.yaml # создание связи license - codes

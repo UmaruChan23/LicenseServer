@@ -11,7 +11,10 @@ public class Trial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    long id;
+    private long id;
+
+    @Column(name = "product_id")
+    private long productId;
 
     @Column(name = "user_id")
     private long userId;

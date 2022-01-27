@@ -18,6 +18,10 @@ public class ActivationCode {
     private Date firstActivationDate;
     private String type;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User owner;
+
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "code")
     List<License> license;
 
@@ -106,6 +110,14 @@ public class ActivationCode {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User user) {
+        this.owner = user;
     }
 
     public Product getProduct() {

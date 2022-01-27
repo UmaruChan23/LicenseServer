@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: ALTER-LICENSE-1
+      author: SweetBuddy
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: license
+            baseColumnNames: code_id
+            referencedTableName: codes
+            referencedColumnNames: id
+            constraintName: FK83h48qb654ei5d7qqh0ru4wd0
