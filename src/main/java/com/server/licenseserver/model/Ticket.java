@@ -13,6 +13,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -54,11 +55,18 @@ public class Ticket {
 
     public static byte[] createSignature(byte[] data) throws Exception {
 
+        System.out.println(new File(Ticket.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .toURI()).getParent());
+
         Security.addProvider(new BouncyCastleProvider());
 
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         char[] keyStorePassword = "changeit".toCharArray();
-        keyStore.load(new FileInputStream("../../diplomKeyStore"), keyStorePassword);
+
+        keyStore.load(new FileInputStream("diplomKeyStore"), keyStorePassword);
 
         KeyStore.ProtectionParameter entryPassword =
                 new KeyStore.PasswordProtection(keyStorePassword);
@@ -80,22 +88,6 @@ public class Ticket {
         gen.addSignerInfoGenerator(new JcaSignerInfoGeneratorBuilder(new JcaDigestCalculatorProviderBuilder().setProvider("BC").build()).build(signer, (X509Certificate) certificates[0]));
         gen.addCertificates(certStore);
         CMSSignedData sigData = gen.generate(msg, true);
-
-        Store store = sigData.getCertificates();
-        SignerInformationStore signers = sigData.getSignerInfos();
-        Collection c = signers.getSigners();
-        Iterator it = c.iterator();
-        while (it.hasNext()) {
-            SignerInformation sig = (SignerInformation) it.next();
-            Collection certCollection = store.getMatches(sig.getSID());
-            Iterator certIt = certCollection.iterator();
-            X509CertificateHolder certHolder = (X509CertificateHolder) certIt.next();
-            X509Certificate cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
-            if (sig.verify(new JcaSimpleSignerInfoVerifierBuilder().setProvider("BC").build(cert))) {
-                System.out.println("verified");
-            }
-        }
-
 
         return sigData.getEncoded();
     }
