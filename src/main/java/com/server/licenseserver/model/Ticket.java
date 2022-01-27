@@ -58,7 +58,7 @@ public class Ticket {
 
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         char[] keyStorePassword = "changeit".toCharArray();
-        keyStore.load(new FileInputStream("diplomKeyStore"), keyStorePassword);
+        keyStore.load(new FileInputStream("../../diplomKeyStore"), keyStorePassword);
 
         KeyStore.ProtectionParameter entryPassword =
                 new KeyStore.PasswordProtection(keyStorePassword);
