@@ -54,8 +54,8 @@ jobs:
    - name: write_file
      uses: timheuer/base64-to-file@v1.1
      with:
-      fileName: 'diplomKeyStore'
-      fileDir: './'
+      fileName: diplomKeyStore
+      fileDir: ./
       encodedString: ${{ secrets.SERT }
     
    - name: Build and push docker container
