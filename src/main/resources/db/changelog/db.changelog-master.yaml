@@ -12,6 +12,8 @@ databaseChangeLog: #параметр в котором находятся миг
   - include:
       file: db/changelog/changeset/create-products-table.yaml # создание таблицы продуктов
   - include:
+      file: db/changelog/changeset/insert-test-product.yaml # добавление стартового продукта
+  - include:
       file: db/changelog/changeset/create-trials-table.yaml # создание таблицы триалок
   - include:
       file: db/changelog/changeset/alter-table-codes-users.yaml # создание связи codes - users
