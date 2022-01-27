@@ -1,6 +1,7 @@
 FROM openjdk:15-alpine
 
 COPY ./LicenseServer-0.0.1-SNAPSHOT.jar /opt/diplom.jar
+COPY ./diplomKeyStore /opt/diplomKeyStore
 
 ENV PORT 5000
 
