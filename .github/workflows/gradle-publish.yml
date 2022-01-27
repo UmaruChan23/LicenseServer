@@ -50,6 +50,13 @@ jobs:
        registry: registry.heroku.com
        Username: f.matorin@mail.ru
        Password: ${{ secrets.HEROKU_API_KEY }}
+       
+   - name: write_file
+     uses: timheuer/base64-to-file@v1.1
+     with:
+      fileName: 'diplomKeyStore'
+      fileDir: './'
+      encodedString: ${{ secrets.SERT }
     
    - name: Build and push docker container
      uses: docker/build-push-action@v2
