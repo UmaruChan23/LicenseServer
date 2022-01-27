@@ -13,6 +13,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -54,10 +55,17 @@ public class Ticket {
 
     public static byte[] createSignature(byte[] data) throws Exception {
 
+        System.out.println(new File(Ticket.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .toURI()).getParent());
+
         Security.addProvider(new BouncyCastleProvider());
 
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         char[] keyStorePassword = "changeit".toCharArray();
+
         keyStore.load(new FileInputStream("diplomKeyStore"), keyStorePassword);
 
         KeyStore.ProtectionParameter entryPassword =
