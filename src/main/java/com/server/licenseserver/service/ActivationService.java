@@ -2,8 +2,11 @@ package com.server.licenseserver.service;
 
 import com.server.licenseserver.entity.ActivationCode;
 import com.server.licenseserver.entity.License;
+import com.server.licenseserver.entity.User;
+import com.server.licenseserver.exception.ActivationException;
 import com.server.licenseserver.repo.ActivationCodeRepo;
 import com.server.licenseserver.repo.LicenseRepo;
+import com.server.licenseserver.repo.UserRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,14 +21,16 @@ public class ActivationService {
 
     private final LicenseRepo licenseRepo;
 
-    public ActivationService(ActivationCodeRepo activationCodeRepo, LicenseRepo licenseRepo) {
+    private final UserRepo userRepo;
+
+    public ActivationService(ActivationCodeRepo activationCodeRepo, LicenseRepo licenseRepo, UserRepo userRepo) {
         this.activationCodeRepo = activationCodeRepo;
         this.licenseRepo = licenseRepo;
+        this.userRepo = userRepo;
     }
 
     @Transactional
-    public License activate(String code, String deviceId) {
-        ActivationCode activationCode = activationCodeRepo.findByCode(code);
+    public License activate(ActivationCode activationCode, String deviceId) throws ActivationException {
         Calendar calendar = new GregorianCalendar();
         if (activationCode != null && activationCode.canAddDevice()) {
             activationCode.increaseActiveDeviceCount();
@@ -40,6 +45,6 @@ public class ActivationService {
             licenseRepo.save(license);
             return license;
         }
-        return null;
+        throw new ActivationException("Activation code not found or maximum number of devices reached");
     }
 }

@@ -29,6 +29,7 @@ public class Ticket {
 
     private Date activationDate;
     private Date licenseExpDate;
+    private long userId;
     private String deviceId;
     private String type;
     private boolean blocked;
@@ -40,6 +41,7 @@ public class Ticket {
         this.ticketExpDate = currentDate.getTime();
         this.activationDate = license.getActivationDate();
         this.licenseExpDate = license.getEndingDate();
+        this.userId = license.getCode().getOwner().getId();
         this.deviceId = license.getDeviceId();
         this.type = license.getCode().getType();
         this.blocked = false;
@@ -53,7 +55,7 @@ public class Ticket {
         }
     }
 
-    public static byte[] createSignature(byte[] data) throws Exception {
+    private static byte[] createSignature(byte[] data) throws Exception {
 
         Security.addProvider(new BouncyCastleProvider());
 

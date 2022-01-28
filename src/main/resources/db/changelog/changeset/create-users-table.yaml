@@ -14,11 +14,6 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: has_activated_license
-                  type: boolean
-                  constraints:
-                    nullable: false
-              - column:
                   name: login
                   type: varchar(255)
                   constraints:

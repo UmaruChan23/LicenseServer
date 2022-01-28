@@ -3,6 +3,7 @@ package com.server.licenseserver.service;
 import com.server.licenseserver.entity.Role;
 import com.server.licenseserver.entity.User;
 import com.server.licenseserver.exception.UserAlreadyExistsException;
+import com.server.licenseserver.exception.UserNotFoundException;
 import com.server.licenseserver.repo.RoleRepo;
 import com.server.licenseserver.repo.TrialRepo;
 import com.server.licenseserver.repo.UserRepo;
@@ -16,16 +17,14 @@ public class UserService {
 
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
-    private final TrialRepo trialRepo;
 
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
     @Lazy
-    public UserService(UserRepo userRepo, RoleRepo roleRepo, TrialRepo trialRepo, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepo userRepo, RoleRepo roleRepo, PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
-        this.trialRepo = trialRepo;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -43,19 +42,13 @@ public class UserService {
         return userRepo.findByLogin(login);
     }
 
-    public User findByLoginAndPassword(String login, String password) {
+    public User findByLoginAndPassword(String login, String password) throws UserNotFoundException {
         User userEntity = findByLogin(login);
         if (userEntity != null) {
             if (passwordEncoder.matches(password, userEntity.getPassword())) {
                 return userEntity;
             }
         }
-        return null;
+        throw new UserNotFoundException("user not found");
     }
-
-    public boolean hasActivatedLicense(String login) {
-        User user = userRepo.findByLogin(login);
-        return user.isHasActivatedLicense();
-    }
-
 }

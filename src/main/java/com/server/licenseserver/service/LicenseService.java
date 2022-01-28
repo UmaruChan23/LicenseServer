@@ -1,6 +1,9 @@
 package com.server.licenseserver.service;
 
 import com.server.licenseserver.entity.*;
+import com.server.licenseserver.exception.ActivationException;
+import com.server.licenseserver.exception.ProductNotFoundException;
+import com.server.licenseserver.exception.TrialAlreadyExistsException;
 import com.server.licenseserver.model.ActivationRequest;
 import com.server.licenseserver.model.GenerateCodeRequest;
 import com.server.licenseserver.model.GenerateTrialRequest;
@@ -31,11 +34,7 @@ public class LicenseService {
 
     private final ProductRepo productRepo;
 
-    public LicenseService(ActivationCodeRepo activationCodeRepo,
-                          LicenseRepo licenseRepo,
-                          UserService userService,
-                          ActivationService activationService, TrialRepo trialRepo,
-                          ProductRepo productRepo, JwtProvider provider) {
+    public LicenseService(ActivationCodeRepo activationCodeRepo, LicenseRepo licenseRepo, UserService userService, ActivationService activationService, TrialRepo trialRepo, ProductRepo productRepo, JwtProvider provider) {
         this.activationCodeRepo = activationCodeRepo;
         this.licenseRepo = licenseRepo;
         this.userService = userService;
@@ -63,50 +62,58 @@ public class LicenseService {
     }
 
     @Transactional
-    public String generateTrial(GenerateTrialRequest request) {
+    public String generateTrial(GenerateTrialRequest request)
+            throws TrialAlreadyExistsException, ProductNotFoundException {
         String login = request.getLogin();
         String deviceId = request.getDeviceId();
-        //сделать поиск по id +
         long productId = request.getProductId();
         User user = userService.findByLogin(login);
         Product product = productRepo.findById(productId);
-        //открыть транзакцию +
-        if (user != null) {
-            if (trialRepo.findByUserIdAndDeviceId(user.getId(), deviceId) == null) {
-                Trial trial = new Trial();
-                trial.setProductId(product.getId());
-                trial.setUserId(user.getId());
-                trial.setDeviceId(deviceId);
-                trialRepo.save(trial);
-                return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()), user);
+        if (product != null) {
+            if (user != null) {
+                if (trialRepo.findByUserIdAndDeviceId(user.getId(), deviceId) == null) {
+                    Trial trial = new Trial();
+                    trial.setProductId(product.getId());
+                    trial.setUserId(user.getId());
+                    trial.setDeviceId(deviceId);
+                    trialRepo.save(trial);
+                    return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()), user);
+                }
+                throw new TrialAlreadyExistsException("trial has already been activated for this user");
             }
-            return null;
+            throw new UsernameNotFoundException("user not found");
+        } else {
+            throw new ProductNotFoundException("product not found");
         }
-        throw new UsernameNotFoundException("user not found");
     }
 
-    public Ticket activateLicense(ActivationRequest request) {
+    public Ticket activateLicense(ActivationRequest request) throws ActivationException {
         String deviceId = request.getDeviceId();
-        String code = request.getCode();
-        License currentLicense = getActivatedLicenseForProduct(deviceId, code);
-        if (currentLicense != null) {
-            if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
-                blockTrial(currentLicense);
-            } else {
-                //выкинуть исключение
-                return null;
+        ActivationCode code = activationCodeRepo.findByCode(request.getCode());
+        if (code != null) {
+            License currentLicense = getActivatedLicenseForProduct(deviceId, code);
+            if (currentLicense != null) {
+                if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
+                    blockTrial(currentLicense);
+                } else {
+                    throw new ActivationException("there is already an active license");
+                }
             }
+        } else {
+            throw new ActivationException("invalid code");
         }
         Ticket ticket = new Ticket(activationService.activate(code, deviceId));
         ticket.signTicket();
         return ticket;
     }
 
-    public License getActivatedLicense(String deviceId) {
+    public License getActivatedLicense(String deviceId, long userId) {
         List<License> licenses = licenseRepo.findAllByDeviceId(deviceId);
         for (License license : licenses) {
             if (!license.isBlocked() && license.getEndingDate().after(new Date())) {
-                return license;
+                if (license.getCode().getOwner().getId() == userId) {
+                    return license;
+                }
             }
         }
         return null;
@@ -117,11 +124,10 @@ public class LicenseService {
         licenseRepo.save(license);
     }
 
-    public License getActivatedLicenseForProduct(String deviceId, String code) {
-        License license = getActivatedLicense(deviceId);
+    public License getActivatedLicenseForProduct(String deviceId, ActivationCode code) {
+        License license = getActivatedLicense(deviceId, code.getOwner().getId());
         if (license != null) {
-            ActivationCode activationCode = activationCodeRepo.findByCode(code);
-            if (license.getCode().getProduct().getId() == activationCode.getProduct().getId()) {
+            if (license.getCode().getProduct().getId() == code.getProduct().getId()) {
                 return license;
             }
         }
@@ -129,10 +135,8 @@ public class LicenseService {
     }
 
     public Ticket refreshTicket(Ticket ticket) {
-        License license = getActivatedLicense(ticket.getDeviceId());
-        if (ticket.getActivationDate().equals(license.getActivationDate()) &&
-            ticket.getLicenseExpDate().equals(license.getActivationDate()) &&
-            !license.isBlocked()) {
+        License license = getActivatedLicense(ticket.getDeviceId(), ticket.getUserId());
+        if (ticket.getActivationDate().equals(license.getActivationDate()) && ticket.getLicenseExpDate().equals(license.getActivationDate()) && !license.isBlocked()) {
             Calendar currentDate = new GregorianCalendar();
             currentDate.add(Calendar.DAY_OF_MONTH, 1);
             ticket.setTicketExpDate(currentDate.getTime());
@@ -146,11 +150,7 @@ public class LicenseService {
         int targetStringLength = 20;
         Random random = new Random();
 
-        String generatedString = random.ints(leftLimit, rightLimit + 1)
-                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
-                .limit(targetStringLength)
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-                .toString();
+        String generatedString = random.ints(leftLimit, rightLimit + 1).filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97)).limit(targetStringLength).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
 
         return generatedString;
     }
