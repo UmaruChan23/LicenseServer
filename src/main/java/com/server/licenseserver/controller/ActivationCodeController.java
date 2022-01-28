@@ -1,5 +1,8 @@
 package com.server.licenseserver.controller;
 
+import com.server.licenseserver.exception.ActivationException;
+import com.server.licenseserver.exception.ProductNotFoundException;
+import com.server.licenseserver.exception.TrialAlreadyExistsException;
 import com.server.licenseserver.model.ActivationRequest;
 import com.server.licenseserver.model.GenerateCodeRequest;
 import com.server.licenseserver.model.GenerateTrialRequest;
@@ -44,7 +47,7 @@ public class ActivationCodeController {
     @PostMapping ("/trial")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
     public String getTrialCode(@RequestHeader("Authorization") String token,
-                               @RequestBody long productId) {
+                               @RequestBody long productId) throws TrialAlreadyExistsException, ProductNotFoundException {
         String subToken = token.substring(7);
         GenerateTrialRequest request = new GenerateTrialRequest(
                 jwtProvider.getLoginFromToken(subToken),
@@ -57,7 +60,7 @@ public class ActivationCodeController {
     @PostMapping(value = "/activate", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
     public ResponseEntity<Ticket> activateCode(@RequestHeader("Authorization") String token,
-                                               @RequestBody String code) {
+                                               @RequestBody String code) throws ActivationException {
         ActivationRequest request = new ActivationRequest(
                 jwtProvider.getDeviceIdFromToken(token.substring(7)),
                 code
