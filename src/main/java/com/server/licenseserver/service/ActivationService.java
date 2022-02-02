@@ -30,11 +30,13 @@ public class ActivationService {
     }
 
     @Transactional
-    public License activate(ActivationCode activationCode, String deviceId) throws ActivationException {
+    public License activate(ActivationCode activationCode, String deviceId, String login) throws ActivationException {
         Calendar calendar = new GregorianCalendar();
         if (activationCode != null && activationCode.canAddDevice()) {
             activationCode.increaseActiveDeviceCount();
             activationCode.setFirstActivationDate(new Date());
+            User user = userRepo.findByLogin(login);
+            activationCode.setOwner(user);
             License license = new License();
             license.setActivationDate(activationCode.getFirstActivationDate());
             calendar.add(Calendar.DAY_OF_MONTH, activationCode.getDuration());

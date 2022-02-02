@@ -25,13 +25,13 @@ public class DefaultExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<Response> handleUserNotFoundException(UserNotFoundException ex) {
         Response response = new Response(ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<Response> handleProductNotFoundException(ProductNotFoundException ex) {
         Response response = new Response(ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)

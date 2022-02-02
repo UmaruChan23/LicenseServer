@@ -8,10 +8,7 @@ import com.server.licenseserver.model.ActivationRequest;
 import com.server.licenseserver.model.GenerateCodeRequest;
 import com.server.licenseserver.model.GenerateTrialRequest;
 import com.server.licenseserver.model.Ticket;
-import com.server.licenseserver.repo.ActivationCodeRepo;
-import com.server.licenseserver.repo.LicenseRepo;
-import com.server.licenseserver.repo.ProductRepo;
-import com.server.licenseserver.repo.TrialRepo;
+import com.server.licenseserver.repo.*;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -34,28 +31,30 @@ public class LicenseService {
 
     private final ProductRepo productRepo;
 
-    public LicenseService(ActivationCodeRepo activationCodeRepo, LicenseRepo licenseRepo, UserService userService, ActivationService activationService, TrialRepo trialRepo, ProductRepo productRepo, JwtProvider provider) {
+    private final UserRepo userRepo;
+
+    public LicenseService(ActivationCodeRepo activationCodeRepo, LicenseRepo licenseRepo, UserService userService, ActivationService activationService, TrialRepo trialRepo, ProductRepo productRepo, JwtProvider provider, UserRepo userRepo) {
         this.activationCodeRepo = activationCodeRepo;
         this.licenseRepo = licenseRepo;
         this.userService = userService;
         this.activationService = activationService;
         this.trialRepo = trialRepo;
         this.productRepo = productRepo;
+        this.userRepo = userRepo;
     }
 
-    public String createNewActivationCode(GenerateCodeRequest request, User user) {
-        ActivationCode activationCode = generateCodeFromRequest(request, user);
+    public String createNewActivationCode(GenerateCodeRequest request) {
+        ActivationCode activationCode = generateCodeFromRequest(request);
         activationCodeRepo.save(activationCode);
         return activationCode.getCode();
     }
 
-    private ActivationCode generateCodeFromRequest(GenerateCodeRequest request, User user) {
+    private ActivationCode generateCodeFromRequest(GenerateCodeRequest request) {
         ActivationCode activationCode = new ActivationCode();
         activationCode.setCode(generateCode());
         activationCode.setDeviceCount(request.getDeviceCount());
         activationCode.setDuration(request.getDuration());
         activationCode.setType(request.getType());
-        activationCode.setOwner(user);
         Product product = productRepo.getById(request.getProductId());
         activationCode.setProduct(product);
         return activationCode;
@@ -77,7 +76,7 @@ public class LicenseService {
                     trial.setUserId(user.getId());
                     trial.setDeviceId(deviceId);
                     trialRepo.save(trial);
-                    return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()), user);
+                    return createNewActivationCode(new GenerateCodeRequest(1, 30, "TRIAL", product.getId()));
                 }
                 throw new TrialAlreadyExistsException("trial has already been activated for this user");
             }
@@ -91,7 +90,7 @@ public class LicenseService {
         String deviceId = request.getDeviceId();
         ActivationCode code = activationCodeRepo.findByCode(request.getCode());
         if (code != null) {
-            License currentLicense = getActivatedLicenseForProduct(deviceId, code);
+            License currentLicense = getActivatedLicenseForProduct(deviceId, code, request.getLogin());
             if (currentLicense != null) {
                 if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
                     blockTrial(currentLicense);
@@ -102,7 +101,7 @@ public class LicenseService {
         } else {
             throw new ActivationException("invalid code");
         }
-        Ticket ticket = new Ticket(activationService.activate(code, deviceId));
+        Ticket ticket = new Ticket(activationService.activate(code, deviceId, request.getLogin()));
         ticket.signTicket();
         return ticket;
     }
@@ -124,8 +123,9 @@ public class LicenseService {
         licenseRepo.save(license);
     }
 
-    public License getActivatedLicenseForProduct(String deviceId, ActivationCode code) {
-        License license = getActivatedLicense(deviceId, code.getOwner().getId());
+    public License getActivatedLicenseForProduct(String deviceId, ActivationCode code, String login) {
+        User user = userService.findByLogin(login);
+        License license = getActivatedLicense(deviceId, user.getId());
         if (license != null) {
             if (license.getCode().getProduct().getId() == code.getProduct().getId()) {
                 return license;

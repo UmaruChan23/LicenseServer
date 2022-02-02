@@ -37,11 +37,8 @@ public class ActivationCodeController {
 
     @PostMapping("/generate")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER')")
-    public String getActivationCode(@RequestHeader("Authorization") String token,
-                                    @RequestBody GenerateCodeRequest license) {
-        String subToken = token.substring(7);
-        return licenseService.createNewActivationCode(license,
-                userService.findByLogin(jwtProvider.getLoginFromToken(subToken)));
+    public String getActivationCode(@RequestBody GenerateCodeRequest license) {
+        return licenseService.createNewActivationCode(license);
     }
 
     @PostMapping ("/trial")
@@ -61,8 +58,10 @@ public class ActivationCodeController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
     public ResponseEntity<Ticket> activateCode(@RequestHeader("Authorization") String token,
                                                @RequestBody String code) throws ActivationException {
+        String subToken = token.substring(7);
         ActivationRequest request = new ActivationRequest(
-                jwtProvider.getDeviceIdFromToken(token.substring(7)),
+                jwtProvider.getDeviceIdFromToken(subToken),
+                jwtProvider.getLoginFromToken(subToken),
                 code
         );
         return ResponseEntity.ok(licenseService.activateLicense(request));
