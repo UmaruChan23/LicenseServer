@@ -7,5 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class ActivationRequest {
     String deviceId;
+    String login;
     String code;
 }

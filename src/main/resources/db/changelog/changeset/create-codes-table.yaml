@@ -43,8 +43,6 @@ databaseChangeLog:
               - column:
                   name: user_id
                   type: int8
-                  constraints:
-                    nullable: false
               - column:
                   name: product_id
                   type: int8
