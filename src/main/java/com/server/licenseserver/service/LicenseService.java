@@ -31,8 +31,6 @@ public class LicenseService {
 
     private final ProductRepo productRepo;
 
-    private final UserRepo userRepo;
-
     public LicenseService(ActivationCodeRepo activationCodeRepo, LicenseRepo licenseRepo, UserService userService, ActivationService activationService, TrialRepo trialRepo, ProductRepo productRepo, JwtProvider provider, UserRepo userRepo) {
         this.activationCodeRepo = activationCodeRepo;
         this.licenseRepo = licenseRepo;
@@ -40,7 +38,6 @@ public class LicenseService {
         this.activationService = activationService;
         this.trialRepo = trialRepo;
         this.productRepo = productRepo;
-        this.userRepo = userRepo;
     }
 
     public String createNewActivationCode(GenerateCodeRequest request) {
@@ -136,7 +133,7 @@ public class LicenseService {
 
     public Ticket refreshTicket(Ticket ticket) {
         License license = getActivatedLicense(ticket.getDeviceId(), ticket.getUserId());
-        if (ticket.getActivationDate().equals(license.getActivationDate()) && ticket.getLicenseExpDate().equals(license.getActivationDate()) && !license.isBlocked()) {
+        if (ticket.getActivationDate().equals(license.getActivationDate()) && ticket.getLicenseExpDate().equals(license.getEndingDate()) && !license.isBlocked()) {
             Calendar currentDate = new GregorianCalendar();
             currentDate.add(Calendar.DAY_OF_MONTH, 1);
             ticket.setTicketExpDate(currentDate.getTime());

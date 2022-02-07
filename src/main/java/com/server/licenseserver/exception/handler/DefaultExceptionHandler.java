@@ -39,4 +39,10 @@ public class DefaultExceptionHandler {
         Response response = new Response(ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<Response> handleNullPointerException(NullPointerException ex) {
+        Response response = new Response(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
 }
