@@ -42,7 +42,7 @@ public class DefaultExceptionHandler {
 
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<Response> handleNullPointerException(NullPointerException ex) {
-        Response response = new Response(ex.getMessage());
+        Response response = new Response("not found");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }
