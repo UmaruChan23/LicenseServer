@@ -7,5 +7,4 @@ import java.util.List;
 
 public interface LicenseRepo extends JpaRepository<License, Long> {
     List<License> findAllByDeviceId (String id);
-    License findByCodeAndDeviceId (long codeId, String deviceId);
 }

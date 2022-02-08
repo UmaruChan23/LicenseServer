@@ -37,7 +37,7 @@ public class ActivationCodeController {
 
     @PostMapping("/generate")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER')")
-    public String getActivationCode(@RequestBody GenerateCodeRequest license) {
+    public String getActivationCode(@RequestBody GenerateCodeRequest license) throws ProductNotFoundException {
         return licenseService.createNewActivationCode(license);
     }
 

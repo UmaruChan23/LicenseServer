@@ -11,6 +11,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.util.Store;
 
+import javax.validation.constraints.NotNull;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -23,12 +24,24 @@ import java.util.*;
 public class Ticket {
     private Date ticketExpDate;
 
+    @NotNull
     private Date activationDate;
+
+    @NotNull
     private Date licenseExpDate;
+
+    @NotNull
     private long userId;
+
+    @NotNull
     private String deviceId;
+
+    @NotNull
     private String type;
+
+    @NotNull
     private boolean blocked;
+
     private byte[] signature;
 
     public Ticket(License license) {
