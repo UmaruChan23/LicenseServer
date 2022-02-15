@@ -4,10 +4,8 @@ import com.server.licenseserver.entity.*;
 import com.server.licenseserver.exception.ActivationException;
 import com.server.licenseserver.exception.ProductNotFoundException;
 import com.server.licenseserver.exception.TrialAlreadyExistsException;
-import com.server.licenseserver.model.ActivationRequest;
-import com.server.licenseserver.model.GenerateCodeRequest;
-import com.server.licenseserver.model.GenerateTrialRequest;
-import com.server.licenseserver.model.Ticket;
+import com.server.licenseserver.exception.handler.InvalidTicketException;
+import com.server.licenseserver.model.*;
 import com.server.licenseserver.repo.*;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -40,21 +38,25 @@ public class LicenseService {
         this.productRepo = productRepo;
     }
 
-    public String createNewActivationCode(GenerateCodeRequest request) {
+    public String createNewActivationCode(GenerateCodeRequest request) throws ProductNotFoundException {
         ActivationCode activationCode = generateCodeFromRequest(request);
         activationCodeRepo.save(activationCode);
         return activationCode.getCode();
     }
 
-    private ActivationCode generateCodeFromRequest(GenerateCodeRequest request) {
+    private ActivationCode generateCodeFromRequest(GenerateCodeRequest request) throws ProductNotFoundException {
         ActivationCode activationCode = new ActivationCode();
         activationCode.setCode(generateCode());
         activationCode.setDeviceCount(request.getDeviceCount());
         activationCode.setDuration(request.getDuration());
         activationCode.setType(request.getType());
-        Product product = productRepo.getById(request.getProductId());
-        activationCode.setProduct(product);
-        return activationCode;
+        Product product = productRepo.findById(request.getProductId());
+        if (product != null) {
+            activationCode.setProduct(product);
+            activationCodeRepo.save(activationCode);
+            return activationCode;
+        }
+        throw new ProductNotFoundException("product not found");
     }
 
     @Transactional
@@ -122,6 +124,7 @@ public class LicenseService {
 
     public License getActivatedLicenseForProduct(String deviceId, ActivationCode code, String login) {
         User user = userService.findByLogin(login);
+        System.out.println(user);
         License license = getActivatedLicense(deviceId, user.getId());
         if (license != null) {
             if (license.getCode().getProduct().getId() == code.getProduct().getId()) {
@@ -131,14 +134,15 @@ public class LicenseService {
         return null;
     }
 
-    public Ticket refreshTicket(Ticket ticket) {
+    public Ticket refreshTicket(Ticket ticket) throws InvalidTicketException {
         License license = getActivatedLicense(ticket.getDeviceId(), ticket.getUserId());
         if (ticket.getActivationDate().equals(license.getActivationDate()) && ticket.getLicenseExpDate().equals(license.getEndingDate()) && !license.isBlocked()) {
             Calendar currentDate = new GregorianCalendar();
             currentDate.add(Calendar.DAY_OF_MONTH, 1);
             ticket.setTicketExpDate(currentDate.getTime());
+            return ticket;
         }
-        return ticket;
+        throw new InvalidTicketException("invalid ticket");
     }
 
     private String generateCode() {
@@ -150,5 +154,15 @@ public class LicenseService {
         String generatedString = random.ints(leftLimit, rightLimit + 1).filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97)).limit(targetStringLength).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
 
         return generatedString;
+    }
+
+    public List<CodeInfoForClient> getAllUserCodes(String login) {
+        User user = userService.findByLogin(login);
+        List<ActivationCode> codes = activationCodeRepo.findAllByOwner(user);
+        List<CodeInfoForClient> resultList = new ArrayList<>();
+        for (ActivationCode code : codes) {
+            resultList.add(new CodeInfoForClient(code));
+        }
+        return resultList;
     }
 }

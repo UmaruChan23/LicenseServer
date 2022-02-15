@@ -40,6 +40,12 @@ public class DefaultExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidTicketException.class)
+    public ResponseEntity<Response> handleInvalidTicketException(InvalidTicketException ex) {
+        Response response = new Response(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<Response> handleNullPointerException(NullPointerException ex) {
         Response response = new Response("not found");
