@@ -5,10 +5,7 @@ import com.server.licenseserver.exception.ActivationException;
 import com.server.licenseserver.exception.ProductNotFoundException;
 import com.server.licenseserver.exception.TrialAlreadyExistsException;
 import com.server.licenseserver.exception.handler.InvalidTicketException;
-import com.server.licenseserver.model.ActivationRequest;
-import com.server.licenseserver.model.GenerateCodeRequest;
-import com.server.licenseserver.model.GenerateTrialRequest;
-import com.server.licenseserver.model.Ticket;
+import com.server.licenseserver.model.*;
 import com.server.licenseserver.repo.*;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -157,5 +154,15 @@ public class LicenseService {
         String generatedString = random.ints(leftLimit, rightLimit + 1).filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97)).limit(targetStringLength).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
 
         return generatedString;
+    }
+
+    public List<CodeInfoForClient> getAllUserCodes(String login) {
+        User user = userService.findByLogin(login);
+        List<ActivationCode> codes = activationCodeRepo.findAllByOwner(user);
+        List<CodeInfoForClient> resultList = new ArrayList<>();
+        for (ActivationCode code : codes) {
+            resultList.add(new CodeInfoForClient(code));
+        }
+        return resultList;
     }
 }

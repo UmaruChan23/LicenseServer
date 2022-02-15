@@ -56,6 +56,8 @@ public class ActivationCode {
         }
     }
 
+    public int getActiveDevices() {return activeDevices;}
+
     public long getId() {
         return id;
     }
