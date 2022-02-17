@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: INSERT-PRODUCT-2
+      author: SweetBuddy
+      changes:
+        - insert:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: is_blocked
+                  value: false
+              - column:
+                  name: name
+                  value: test2
+        - insert:
+            tableName: product
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: is_blocked
+                  value: false
+              - column:
+                  name: name
+                  value: test3
