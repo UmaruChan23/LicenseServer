@@ -28,10 +28,10 @@ public class MainSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/products/**").hasRole("ADMIN")
+                .antMatchers("/products/add", "/products/blick").hasRole("ADMIN")
                 .antMatchers("/code/generate").hasAnyRole("ADMIN", "SELLER")
                 .antMatchers("/code/trial").hasAnyRole("ADMIN", "USER", "SELLER")
-                .antMatchers("/register", "/auth", "/user/all").permitAll()
+                .antMatchers("/register", "/auth", "/user/all", "/products/list").permitAll()
                 .and()
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     }

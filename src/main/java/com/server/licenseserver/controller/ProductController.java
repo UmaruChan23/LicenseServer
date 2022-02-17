@@ -1,6 +1,7 @@
 package com.server.licenseserver.controller;
 
 import com.server.licenseserver.entity.Product;
+import com.server.licenseserver.exception.model.ProductModel;
 import com.server.licenseserver.service.ProductService;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,17 +17,17 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping
-    public List<Product> getAllProducts() {
+    @GetMapping("/list")
+    public List<ProductModel> getAllProducts() {
         return productService.getAllProducts();
     }
 
-    @PostMapping
+    @PostMapping("/add")
     public Product addProduct(@RequestBody String productName) {
           return productService.addProduct(productName);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/block")
     public boolean blockProduct(@RequestBody Long productId) {
        return productService.blockProduct(productId);
     }
