@@ -23,3 +23,5 @@ databaseChangeLog: #параметр в котором находятся миг
       file: db/changelog/changeset/create-license-table.yaml # создание таблицы лицензий
   - include:
       file: db/changelog/changeset/alter-table-license-codes.yaml # создание связи license - codes
+  - include:
+      file: db/changelog/changeset/insert-new-products.yaml
