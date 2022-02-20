@@ -89,7 +89,10 @@ public class LicenseService {
         String deviceId = request.getDeviceId();
         ActivationCode code = activationCodeRepo.findByCode(request.getCode());
         if (code != null) {
-            License currentLicense = getActivatedLicenseForProduct(deviceId, code, request.getLogin());
+            User user = userService.findByLogin(request.getLogin());
+            License currentLicense = getActivatedLicense(deviceId,
+                    user.getId(),
+                    code.getProduct().getId()).orElse(null);
             if (currentLicense != null) {
                 if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
                     blockTrial(currentLicense);
@@ -105,16 +108,18 @@ public class LicenseService {
         return ticket;
     }
 
-    public License getActivatedLicense(String deviceId, long userId) {
+    public Optional<License> getActivatedLicense(String deviceId, long userId, long productId) {
         List<License> licenses = licenseRepo.findAllByDeviceId(deviceId);
         for (License license : licenses) {
             if (!license.isBlocked() && license.getEndingDate().after(new Date())) {
                 if (license.getCode().getOwner().getId() == userId) {
-                    return license;
+                    if (license.getCode().getProduct().getId() == productId) {
+                        return Optional.of(license);
+                    }
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     public void blockTrial(License license) {
@@ -122,25 +127,15 @@ public class LicenseService {
         licenseRepo.save(license);
     }
 
-    public License getActivatedLicenseForProduct(String deviceId, ActivationCode code, String login) {
+    public Ticket refreshTicket(long productId, String login, String deviceId) throws InvalidTicketException {
         User user = userService.findByLogin(login);
-        System.out.println(user);
-        License license = getActivatedLicense(deviceId, user.getId());
-        if (license != null) {
-            if (license.getCode().getProduct().getId() == code.getProduct().getId()) {
-                return license;
-            }
-        }
-        return null;
-    }
-
-    public Ticket refreshTicket(Ticket ticket) throws InvalidTicketException {
-        License license = getActivatedLicense(ticket.getDeviceId(), ticket.getUserId());
-        if (ticket.getActivationDate().equals(license.getActivationDate()) && ticket.getLicenseExpDate().equals(license.getEndingDate()) && !license.isBlocked()) {
+        License license = getActivatedLicense(deviceId, user.getId(), productId).orElse(null);
+        if (Objects.requireNonNull(license).getActivationDate().before(new Date())
+                && license.getEndingDate().after(new Date())
+                && !license.isBlocked()) {
             Calendar currentDate = new GregorianCalendar();
             currentDate.add(Calendar.DAY_OF_MONTH, 1);
-            ticket.setTicketExpDate(currentDate.getTime());
-            return ticket;
+            return new Ticket(license);
         }
         throw new InvalidTicketException("invalid ticket");
     }
@@ -151,9 +146,10 @@ public class LicenseService {
         int targetStringLength = 20;
         Random random = new Random();
 
-        String generatedString = random.ints(leftLimit, rightLimit + 1).filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97)).limit(targetStringLength).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
-
-        return generatedString;
+        return random.ints(leftLimit,
+                rightLimit + 1).filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+                .limit(targetStringLength)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
     }
 
     public List<CodeInfoForClient> getAllUserCodes(String login) {
