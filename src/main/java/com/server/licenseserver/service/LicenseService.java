@@ -130,7 +130,7 @@ public class LicenseService {
     public Ticket refreshTicket(long productId, String login, String deviceId) throws InvalidTicketException {
         User user = userService.findByLogin(login);
         License license = getActivatedLicense(deviceId, user.getId(), productId).orElse(null);
-        if (Objects.requireNonNull(license).getActivationDate().before(new Date())
+        if (license != null && license.getActivationDate().before(new Date())
                 && license.getEndingDate().after(new Date())
                 && !license.isBlocked()) {
             Calendar currentDate = new GregorianCalendar();
