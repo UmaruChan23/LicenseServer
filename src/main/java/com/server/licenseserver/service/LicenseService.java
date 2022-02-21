@@ -4,7 +4,7 @@ import com.server.licenseserver.entity.*;
 import com.server.licenseserver.exception.ActivationException;
 import com.server.licenseserver.exception.ProductNotFoundException;
 import com.server.licenseserver.exception.TrialAlreadyExistsException;
-import com.server.licenseserver.exception.handler.InvalidTicketException;
+import com.server.licenseserver.exception.model.InvalidTicketException;
 import com.server.licenseserver.model.*;
 import com.server.licenseserver.repo.*;
 import com.server.licenseserver.security.jwt.JwtProvider;

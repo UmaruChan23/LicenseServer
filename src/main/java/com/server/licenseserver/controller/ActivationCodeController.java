@@ -1,5 +1,8 @@
 package com.server.licenseserver.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.server.licenseserver.exception.ActivationException;
 import com.server.licenseserver.exception.ProductNotFoundException;
 import com.server.licenseserver.exception.TrialAlreadyExistsException;
@@ -44,7 +47,12 @@ public class ActivationCodeController {
     @PostMapping ("/trial")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
     public String getTrialCode(@RequestHeader("Authorization") String token,
-                               @RequestBody long productId) throws TrialAlreadyExistsException, ProductNotFoundException {
+                               @RequestBody String json) throws TrialAlreadyExistsException,
+            ProductNotFoundException,
+            JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(json);
+        long productId = root.path("productId").asLong();
         String subToken = token.substring(7);
         GenerateTrialRequest request = new GenerateTrialRequest(
                 jwtProvider.getLoginFromToken(subToken),
