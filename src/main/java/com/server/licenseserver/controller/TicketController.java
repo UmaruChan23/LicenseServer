@@ -3,7 +3,7 @@ package com.server.licenseserver.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.server.licenseserver.exception.handler.InvalidTicketException;
+import com.server.licenseserver.exception.model.InvalidTicketException;
 import com.server.licenseserver.model.Ticket;
 import com.server.licenseserver.security.jwt.JwtProvider;
 import com.server.licenseserver.service.LicenseService;

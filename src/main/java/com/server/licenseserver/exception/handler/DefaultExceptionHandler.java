@@ -1,6 +1,8 @@
 package com.server.licenseserver.exception.handler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.server.licenseserver.exception.*;
+import com.server.licenseserver.exception.model.InvalidTicketException;
 import com.server.licenseserver.exception.model.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,5 +52,11 @@ public class DefaultExceptionHandler {
     public ResponseEntity<Response> handleNullPointerException(NullPointerException ex) {
         Response response = new Response("not found");
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(JsonProcessingException.class)
+    public ResponseEntity<Response> handleJsonProcessingException(JsonProcessingException ex) {
+        Response response = new Response("not found");
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
