@@ -65,7 +65,10 @@ public class ActivationCodeController {
     @PostMapping(value = "/activate", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER')")
     public ResponseEntity<Ticket> activateCode(@RequestHeader("Authorization") String token,
-                                               @RequestBody String code) throws ActivationException {
+                                               @RequestBody String json) throws ActivationException, JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(json);
+        String code = root.path("code").asText();
         String subToken = token.substring(7);
         ActivationRequest request = new ActivationRequest(
                 jwtProvider.getDeviceIdFromToken(subToken),
