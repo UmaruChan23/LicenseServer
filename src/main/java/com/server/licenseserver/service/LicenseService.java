@@ -94,7 +94,8 @@ public class LicenseService {
                     user.getId(),
                     code.getProduct().getId()).orElse(null);
             if (currentLicense != null) {
-                if (currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
+                if (code.getType().equalsIgnoreCase("TRIAL") &&
+                        currentLicense.getCode().getType().equalsIgnoreCase("TRIAL")) {
                     blockTrial(currentLicense);
                 } else {
                     throw new ActivationException("there is already an active license");
